@@ -1,5 +1,11 @@
+
+#include <FirebaseESP8266.h>
+#include <FirebaseESP8266HTTPClient.h>
+#include <FirebaseJson.h>
+
 #include <ESP8266WiFi.h>
 #include <Servo.h>
+
 
 const char *ssid =  "unsafe";           // Enter your WiFi Name
 const char *pass =  "Lem@nn91";        // Enter your WiFi Password
@@ -21,7 +27,7 @@ int  hh, mm, ss;
 int count = 0;
 int pos;
 int posTwo;
-int total = 2;
+const int total = 3;
 int space;
 
 //for synchronized control with the front
@@ -62,8 +68,8 @@ void setup() {
   pinMode(slot1, INPUT);
   pinMode(slot2, INPUT);
   pinMode(slot3, INPUT);
+  pinMode(slot4, INPUT);
   wifiConnection();
-  
 }
 
 void loop() {
@@ -72,10 +78,9 @@ void loop() {
   slotOne();
   slotTwo();
   slotThree();
+  delay(3000);
   Serial.print("total de vagas disponives: ");
   Serial.println(space);
-  delay(3000);
-  space = total;
 
 }
 
@@ -94,7 +99,7 @@ void wifiConnection(){
     Serial.println(WiFi.localIP());                        //print local IP address
  }
 void entryGate(){
-
+   space = total;
    entrysensor= !digitalRead(carEnter);
     if (entrysensor == 1) {                             // if high then count and send data
       if(space > 0 ){
@@ -153,14 +158,15 @@ void slotTwo(){
 void slotThree(){
   s3 = digitalRead(slot3);
   if (s3 == 1&& s3_occupied == false) {                     
-     Serial.println("Vaga 3 está disponivel ");
+     Serial.println("Vaga 3 - preferencial, está disponivel ");
      s3_occupied = true;
+     special_slot = 1;
      
   }
  if(s3 == 0 && s3_occupied == true) {
-     Serial.println("Vaga 3 ocupada ");
+     Serial.println("Vaga 3 - preferencial, ocupada ");
      s3_occupied = false;
-     special_slot--;
+     special_slot = special_slot - 1;
  } 
 }
 
