@@ -9,8 +9,8 @@ const char *pass =  "Lem@nn91";                     // Enter your WiFi Password
 
 
 // URL do firebase - config
-#define FIREBASE_HOST "pi5-teste-e2cae.firebaseio.com"
-#define FIREBASE_AUTH "3IY2fjdKSfCHiYTugBACND7IcaRv5RfoSjs7vnEp"
+#define FIREBASE_HOST "youtProject.firebaseio.com"
+#define FIREBASE_AUTH "YourToken"
 #define PUBLISH_INTERVAL 1000 * 30
 Ticker ticker;
 bool publishNewState = true;
