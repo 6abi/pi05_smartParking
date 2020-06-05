@@ -1,14 +1,19 @@
-
-#include <FirebaseESP8266.h>
-#include <FirebaseESP8266HTTPClient.h>
-#include <FirebaseJson.h>
-
 #include <ESP8266WiFi.h>
 #include <Servo.h>
+#include <FirebaseArduino.h>
+#include <Ticker.h>
 
 
-const char *ssid =  "unsafe";                        // Enter your WiFi Name
+const char *ssid =  "mi9";                        // Enter your WiFi Name
 const char *pass =  "Lem@nn91";                     // Enter your WiFi Password
+
+
+// URL do firebase - config
+#define FIREBASE_HOST "pi5-teste-e2cae.firebaseio.com"
+#define FIREBASE_AUTH "3IY2fjdKSfCHiYTugBACND7IcaRv5RfoSjs7vnEp"
+#define PUBLISH_INTERVAL 1000 * 30
+Ticker ticker;
+bool publishNewState = true;
 
 Servo myservoEntry;                               //servo as gate
 Servo myservoExit;                               //servo as gate
@@ -18,7 +23,7 @@ int carExited = A0;                           //exi sensor - LDR analogRead
 int led = D6;                                //LED exit gate
 
 
-
+//Angles servos
 const int CLOSE_ANGLE = 90;                 // The closing angle of the servo motor arm
 const int OPEN_ANGLE = 0;                  // The opening angle of the servo motor arm    
 
@@ -44,7 +49,6 @@ int flag2 = 0;
 int specialSlot = 1;
 int slotToGo;
 
-//String h, m,EntryTimeSlot1,ExitTimeSlot1, EntryTimeSlot2,ExitTimeSlot2, EntryTimeSlot3,ExitTimeSlot3, EntryTimeSlot4,ExitTimeSlot4;
 boolean entrysensor;
 int exitsensor = 0;       //LDR's value reed
 boolean s1,s2,s3,s4,s5,s6;
@@ -56,13 +60,9 @@ int s4_occupied = 1;
 int s5_occupied = 1;
 int s6_occupied = 1;
 
-//void slotOne();
-//void slotTwo();
-//void slotThree();
-//void entryGate():
-//void exitGate();
-//void getRequest();
-//void sendDatas();
+
+
+/*-----------------setup method------------------------------------*/
 
 void setup() {
   delay(1000);
@@ -79,8 +79,12 @@ void setup() {
   pinMode(slot4, INPUT);
   pinMode(slot6, INPUT);
   wifiConnection();
+  setupFirebase();
+  // Registra o ticker para publicar de tempos em tempos
+  ticker.attach_ms(PUBLISH_INTERVAL, publish);
 }
 
+/*-----------------loop method------------------------------------*/
 void loop() {
   entryGate();
   slotDirection();
@@ -92,6 +96,7 @@ void loop() {
   slotFive();
   slotSix();
   countSlots();
+  senDataFirebase();
 
 
   Serial.print("total de vagas: ");
@@ -100,6 +105,7 @@ void loop() {
   Serial.println(slotAvailable);
   delay(3000);
 }
+/*-----------------Wifi method------------------------------------*/
 
 void wifiConnection(){
     WiFi.begin(ssid, pass);                                     //try to connect with wifi
@@ -117,6 +123,9 @@ void wifiConnection(){
     Serial.print(" MAC Address is : ");
     Serial.println(WiFi.macAddress());
  }
+
+/*-----------------control methods------------------------------------*/
+
 void entryGate(){
    entrysensor= !digitalRead(carEnter);
     if (entrysensor == 1) {                             // if high then count and send data
@@ -285,6 +294,29 @@ void slotDirection(){
   slotToGo = slotDirection;
 }
 
- 
+void publish(){
+  publishNewState = true;
+}
 
- 
+void setupFirebase(){
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  String ok = "ok";
+  Firebase.setBool("StopHere", ok);
+}
+
+void senDataFirebase(){
+  if(publishNewState){
+    Serial.println("Publish new State");
+    Firebase.pushInt("/slotControl/slotTotal/", total);
+    Firebase.pushInt("/slotControl/slotDistance/", slotToGo);
+    Firebase.pushInt("/slotControl/totalAvailable/", slotAvailable );
+    Firebase.pushInt("/slots/slotSix/", s6);
+    Firebase.pushInt("/slots/slotFive/", s5);
+    Firebase.pushInt("/slots/slotFour/", s4);
+    Firebase.pushInt("/slots/slotThree/", s3);
+    Firebase.pushInt("/slots/slotTwo/", s2);
+    Firebase.pushInt("/slots/slotOne/", s1);
+    publishNewState = false;
+  }
+  delay(200);
+}
